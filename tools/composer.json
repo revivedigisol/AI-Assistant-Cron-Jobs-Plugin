@@ -1,0 +1,19 @@
+{
+  "name": "enle/daily-cron-tools",
+  "description": "Development tools for the Enle Daily Cron plugin (tests). Kept out of the plugin itself, which has no runtime dependencies and is deployed by copying.",
+  "type": "project",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.1",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Enle\\DailyCron\\Tests\\": "../tests/"
+    },
+    "exclude-from-classmap": ["../tests/Support/wordpress.php"]
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
