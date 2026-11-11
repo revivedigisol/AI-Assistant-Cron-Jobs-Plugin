@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Enle Daily Cron: Idea-to-Market Follow-ups
  * Description: Once a day, sends each Idea Validation lead the next email in Enle's Idea-to-Market sequence (Day 3, 7, 14), written by Claude from the lead's own Validation Report. Activate on enle.org only.
- * Version:     1.0.2
+ * Version:     1.0.3
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author:      Enle
@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 
-define('ENLE_DC_VERSION', '1.0.2');
+define('ENLE_DC_VERSION', '1.0.3');
 define('ENLE_DC_FILE', __FILE__);
 define('ENLE_DC_DIR', plugin_dir_path(__FILE__));
 

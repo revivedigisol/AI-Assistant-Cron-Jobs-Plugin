@@ -2,6 +2,12 @@
 
 All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Each release bumps both the `Version:` header and `ENLE_DC_VERSION` in `enle-daily-cron.php`.
 
+## [1.0.3] - 2026-11-11
+
+### Added
+- **Pagination** for Leads (20 per page) and Recent activity (25 per page), with the usual WordPress "N items  « ‹ 2 of 5 › »" bar above and below each table. Each table pages on its own, and the links jump back to that table.
+- **Loading state on every button** (Save settings, Run now, Send test run, Stop): on click the button is disabled, its label changes ("Saving…", "Running… this can take a minute", "Sending…", "Stopping…") and a spinner shows, so a slow run can't be started twice.
+
 ## [1.0.2] - 2026-11-11
 
 ### Fixed

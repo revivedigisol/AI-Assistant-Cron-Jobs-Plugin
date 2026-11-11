@@ -73,13 +73,20 @@ final class WpdbLeadStore implements LeadStore
         return array_map(array(self::class, 'hydrate'), is_array($rows) ? $rows : array());
     }
 
-    public function recent(int $limit): array
+    public function recent(int $limit, int $offset = 0): array
     {
         global $wpdb;
 
-        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . Schema::leads() . ' ORDER BY id DESC LIMIT %d', $limit), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . Schema::leads() . ' ORDER BY id DESC LIMIT %d OFFSET %d', $limit, max(0, $offset)), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         return array_map(array(self::class, 'hydrate'), is_array($rows) ? $rows : array());
+    }
+
+    public function countLeads(): int
+    {
+        global $wpdb;
+
+        return (int) $wpdb->get_var('SELECT COUNT(*) FROM ' . Schema::leads()); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix only.
     }
 
     public function log(int $lead_id, string $step, string $action, string $detail = '', string $subject = '', string $body = ''): void
@@ -100,13 +107,20 @@ final class WpdbLeadStore implements LeadStore
         );
     }
 
-    public function recentLog(int $limit): array
+    public function recentLog(int $limit, int $offset = 0): array
     {
         global $wpdb;
 
-        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . Schema::log() . ' ORDER BY id DESC LIMIT %d', $limit), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . Schema::log() . ' ORDER BY id DESC LIMIT %d OFFSET %d', $limit, max(0, $offset)), ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         return is_array($rows) ? $rows : array();
+    }
+
+    public function countLog(): int
+    {
+        global $wpdb;
+
+        return (int) $wpdb->get_var('SELECT COUNT(*) FROM ' . Schema::log()); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix only.
     }
 
     public function purgeFinished(int $before): int

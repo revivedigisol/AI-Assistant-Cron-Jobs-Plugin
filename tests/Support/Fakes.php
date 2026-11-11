@@ -60,9 +60,14 @@ final class InMemoryLeadStore implements LeadStore
         return array_slice($out, 0, $limit);
     }
 
-    public function recent(int $limit): array
+    public function recent(int $limit, int $offset = 0): array
     {
-        return array_slice(array_reverse(array_map(static fn ($l) => clone $l, $this->leads)), 0, $limit);
+        return array_slice(array_reverse(array_map(static fn ($l) => clone $l, $this->leads)), max(0, $offset), $limit);
+    }
+
+    public function countLeads(): int
+    {
+        return count($this->leads);
     }
 
     public function log(int $lead_id, string $step, string $action, string $detail = '', string $subject = '', string $body = ''): void
@@ -70,9 +75,14 @@ final class InMemoryLeadStore implements LeadStore
         $this->logRows[] = compact('lead_id', 'step', 'action', 'detail', 'subject', 'body');
     }
 
-    public function recentLog(int $limit): array
+    public function recentLog(int $limit, int $offset = 0): array
     {
-        return array_slice(array_reverse($this->logRows), 0, $limit);
+        return array_slice(array_reverse($this->logRows), max(0, $offset), $limit);
+    }
+
+    public function countLog(): int
+    {
+        return count($this->logRows);
     }
 
     public function purgeFinished(int $before): int

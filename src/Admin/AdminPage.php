@@ -27,6 +27,12 @@ final class AdminPage
     public const SLUG       = 'enle-daily-cron';
     public const CAPABILITY = 'manage_options';
 
+    /** Rows per page in Recent activity. */
+    public const LOG_PER_PAGE = 25;
+
+    /** Rows per page in Leads. */
+    public const LEADS_PER_PAGE = 20;
+
     /** AI Assistant's top-level menu slug. */
     public const PARENT = 'ai-assistant';
 
@@ -139,11 +145,14 @@ final class AdminPage
         $last     = get_option(Runner::LAST_RUN_OPTION, array());
         $next     = wp_next_scheduled(Scheduler::DAILY);
         $signals  = Plugin::signals();
-        $leads    = Plugin::store()->recent(50);
-        $log      = Plugin::store()->recentLog(60);
+        $choices  = Plugin::store()->recent(50); // "Report to use" in Test the sequence.
+        $leads_p  = self::paging('leads_page', Plugin::store()->countLeads(), self::LEADS_PER_PAGE);
+        $leads    = Plugin::store()->recent(self::LEADS_PER_PAGE, $leads_p['offset']);
+        $log_p    = self::paging('log_page', Plugin::store()->countLog(), self::LOG_PER_PAGE);
+        $log      = Plugin::store()->recentLog(self::LOG_PER_PAGE, $log_p['offset']);
         $warnings = self::warnings($s, is_array($last) ? $last : array());
 
-        echo '<div class="wrap"><h1>' . esc_html__('Idea-to-Market follow-ups', 'enle-daily-cron') . '</h1>';
+        echo '<div class="wrap enle-dc"><h1>' . esc_html__('Idea-to-Market follow-ups', 'enle-daily-cron') . '</h1>';
 
         self::notice();
 
@@ -170,17 +179,20 @@ final class AdminPage
             $s['mode'] === Settings::MODE_LIVE ? __('Run now (sends to leads)', 'enle-daily-cron') : __('Run now (dry run)', 'enle-daily-cron'),
             'secondary',
             'submit',
-            false
+            false,
+            array('data-loading' => __('Running… this can take a minute', 'enle-daily-cron'))
         );
         echo '</form>';
 
-        self::renderTestSend($leads);
+        self::renderTestSend($choices);
 
         self::renderSettings($s);
-        self::renderLeads($leads);
-        self::renderLog($log);
+        self::renderLeads($leads, $leads_p);
+        self::renderLog($log, $log_p);
 
         echo '</div>';
+
+        self::loadingScript();
     }
 
     /** @param array<string,mixed> $s */
@@ -227,7 +239,7 @@ final class AdminPage
             . '<p class="description">' . esc_html__('Comma-separated. A booking for any of these stops the sequence.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '</tbody></table>';
-        submit_button(__('Save settings', 'enle-daily-cron'));
+        submit_button(__('Save settings', 'enle-daily-cron'), 'primary', 'submit', true, array('data-loading' => __('Saving…', 'enle-daily-cron')));
         echo '</form>';
     }
 
@@ -263,20 +275,25 @@ final class AdminPage
             . '<p class="description">' . esc_html__('Optional name for "Hi …,". Leave empty to use the chosen lead\'s name, or "Hi there," with the sample report.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '</tbody></table>';
-        submit_button(__('Send test run', 'enle-daily-cron'), 'secondary');
+        submit_button(__('Send test run', 'enle-daily-cron'), 'secondary', 'submit', true, array('data-loading' => __('Sending…', 'enle-daily-cron')));
         echo '</form>';
     }
 
-    /** @param array<int,Lead> $leads */
-    private static function renderLeads(array $leads): void
+    /**
+     * @param array<int,Lead> $leads One page, newest first.
+     * @param array{page:int,pages:int,total:int,offset:int,arg:string} $paging
+     */
+    private static function renderLeads(array $leads, array $paging): void
     {
-        echo '<h2>' . esc_html__('Leads', 'enle-daily-cron') . '</h2>';
+        echo '<h2 id="enle-dc-leads">' . esc_html__('Leads', 'enle-daily-cron') . '</h2>';
 
         if ($leads === array()) {
             echo '<p>' . esc_html__('No leads yet. A lead is added when someone completes an Idea Validation Report.', 'enle-daily-cron') . '</p>';
 
             return;
         }
+
+        self::pagination($paging, 'enle-dc-leads');
 
         echo '<table class="widefat striped"><thead><tr>';
         foreach (array(__('Lead', 'enle-daily-cron'), __('Report', 'enle-daily-cron'), __('Report date', 'enle-daily-cron'), __('Status', 'enle-daily-cron'), __('Sent', 'enle-daily-cron'), __('Next', 'enle-daily-cron'), '') as $h) {
@@ -299,25 +316,32 @@ final class AdminPage
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
                 wp_nonce_field('enle_dc_stop_lead');
                 echo '<input type="hidden" name="action" value="enle_dc_stop_lead"><input type="hidden" name="lead_id" value="' . esc_attr((string) $lead->id) . '">';
-                echo '<button type="submit" class="button button-small">' . esc_html__('Stop', 'enle-daily-cron') . '</button></form>';
+                echo '<button type="submit" class="button button-small" data-loading="' . esc_attr__('Stopping…', 'enle-daily-cron') . '">' . esc_html__('Stop', 'enle-daily-cron') . '</button></form>';
             }
 
             echo '</td></tr>';
         }
 
         echo '</tbody></table>';
+
+        self::pagination($paging, 'enle-dc-leads');
     }
 
-    /** @param array<int,array<string,mixed>> $log */
-    private static function renderLog(array $log): void
+    /**
+     * @param array<int,array<string,mixed>> $log One page, newest first.
+     * @param array{page:int,pages:int,total:int,offset:int,arg:string} $paging
+     */
+    private static function renderLog(array $log, array $paging): void
     {
-        echo '<h2>' . esc_html__('Recent activity', 'enle-daily-cron') . '</h2>';
+        echo '<h2 id="enle-dc-activity">' . esc_html__('Recent activity', 'enle-daily-cron') . '</h2>';
 
         if ($log === array()) {
             echo '<p>' . esc_html__('Nothing yet.', 'enle-daily-cron') . '</p>';
 
             return;
         }
+
+        self::pagination($paging, 'enle-dc-activity');
 
         echo '<table class="widefat striped"><thead><tr><th>' . esc_html__('When (UTC)', 'enle-daily-cron') . '</th><th>' . esc_html__('Lead', 'enle-daily-cron') . '</th><th>' . esc_html__('Step', 'enle-daily-cron') . '</th><th>' . esc_html__('What', 'enle-daily-cron') . '</th><th>' . esc_html__('Detail', 'enle-daily-cron') . '</th></tr></thead><tbody>';
 
@@ -332,6 +356,107 @@ final class AdminPage
         }
 
         echo '</tbody></table>';
+
+        self::pagination($paging, 'enle-dc-activity');
+    }
+
+    /**
+     * The current page from ?$arg=, clamped to the pages that exist.
+     *
+     * @return array{page:int,pages:int,total:int,offset:int,arg:string}
+     */
+    private static function paging(string $arg, int $total, int $per_page): array
+    {
+        $pages = max(1, (int) ceil($total / $per_page));
+        $page  = min($pages, max(1, isset($_GET[$arg]) ? absint($_GET[$arg]) : 1)); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+        return array('page' => $page, 'pages' => $pages, 'total' => $total, 'offset' => ($page - 1) * $per_page, 'arg' => $arg);
+    }
+
+    /**
+     * WordPress-style "N items  « ‹ 2 of 5 › »" bar. Links keep the other
+     * table's page (add_query_arg() keeps the current query) and jump back
+     * to this table.
+     *
+     * @param array{page:int,pages:int,total:int,offset:int,arg:string} $p
+     */
+    private static function pagination(array $p, string $anchor): void
+    {
+        $link = static fn (int $n): string => esc_url(remove_query_arg(array('enle_dc_done', 'sent', 'failed', 'status', 'to', 'invalid', 'dropped'), add_query_arg($p['arg'], $n)) . '#' . $anchor);
+        $nav  = static function (int $n, string $symbol, string $label, bool $enabled) use ($link): string {
+            return $enabled
+                ? '<a class="button" href="' . $link($n) . '"><span class="screen-reader-text">' . esc_html($label) . '</span><span aria-hidden="true">' . $symbol . '</span></a> '
+                : '<span class="tablenav-pages-navspan button disabled" aria-hidden="true">' . $symbol . '</span> ';
+        };
+
+        echo '<div class="tablenav"><div class="tablenav-pages' . ($p['pages'] <= 1 ? ' one-page' : '') . '">';
+        echo '<span class="displaying-num">' . esc_html(sprintf(_n('%s item', '%s items', $p['total'], 'enle-daily-cron'), number_format_i18n($p['total']))) . '</span>';
+
+        if ($p['pages'] > 1) {
+            // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- $nav builds from escaped parts.
+            echo '<span class="pagination-links">';
+            echo $nav(1, '&laquo;', __('First page', 'enle-daily-cron'), $p['page'] > 1);
+            echo $nav($p['page'] - 1, '&lsaquo;', __('Previous page', 'enle-daily-cron'), $p['page'] > 1);
+            echo '<span class="paging-input">' . esc_html(sprintf(__('%1$d of %2$d', 'enle-daily-cron'), $p['page'], $p['pages'])) . '</span> ';
+            echo $nav($p['page'] + 1, '&rsaquo;', __('Next page', 'enle-daily-cron'), $p['page'] < $p['pages']);
+            echo $nav($p['pages'], '&raquo;', __('Last page', 'enle-daily-cron'), $p['page'] < $p['pages']);
+            echo '</span>';
+            // phpcs:enable
+        }
+
+        echo '</div><br class="clear"></div>';
+    }
+
+    /**
+     * Loading state for every form on this page: on submit the button is
+     * disabled (no double runs or double test sends), its label changes to
+     * its data-loading text and a spinner shows. The browser's back/forward
+     * cache restores the page as it was, so pageshow resets the buttons.
+     */
+    private static function loadingScript(): void
+    {
+        ?>
+<style>.enle-dc .enle-dc-spinner{float:none;margin:0 0 0 6px;vertical-align:middle;}</style>
+<script>
+(function () {
+    var root = document.querySelector('.wrap.enle-dc');
+    if (!root) { return; }
+
+    root.addEventListener('submit', function (event) {
+        var form = event.target;
+        var button = form.querySelector('[type="submit"]');
+        if (!button || form.dataset.busy === '1') {
+            if (form.dataset.busy === '1') { event.preventDefault(); }
+            return;
+        }
+
+        form.dataset.busy = '1';
+        button.dataset.label = button.tagName === 'INPUT' ? button.value : button.textContent;
+        var text = button.dataset.loading || 'Working…';
+        if (button.tagName === 'INPUT') { button.value = text; } else { button.textContent = text; }
+
+        var spinner = document.createElement('span');
+        spinner.className = 'spinner is-active enle-dc-spinner';
+        button.insertAdjacentElement('afterend', spinner);
+
+        // After the browser has collected the form data.
+        setTimeout(function () { button.disabled = true; }, 0);
+    });
+
+    window.addEventListener('pageshow', function () {
+        root.querySelectorAll('form[data-busy="1"]').forEach(function (form) {
+            var button = form.querySelector('[type="submit"]');
+            form.dataset.busy = '';
+            if (button) {
+                button.disabled = false;
+                if (button.tagName === 'INPUT') { button.value = button.dataset.label; } else { button.textContent = button.dataset.label; }
+            }
+            form.querySelectorAll('.enle-dc-spinner').forEach(function (el) { el.remove(); });
+        });
+    });
+})();
+</script>
+        <?php
     }
 
     /**
