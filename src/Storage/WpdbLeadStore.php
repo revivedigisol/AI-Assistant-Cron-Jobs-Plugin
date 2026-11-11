@@ -114,7 +114,11 @@ final class WpdbLeadStore implements LeadStore
         global $wpdb;
 
         $cutoff = gmdate('Y-m-d H:i:s', $before);
-        $ids    = $wpdb->get_col($wpdb->prepare('SELECT id FROM ' . Schema::leads() . ' WHERE status <> %s AND updated_at < %s', Lead::ACTIVE, $cutoff)); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        // Test sends and other rows that belong to no lead.
+        $wpdb->query($wpdb->prepare('DELETE FROM ' . Schema::log() . ' WHERE lead_id = 0 AND created_at < %s', $cutoff)); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        $ids   = $wpdb->get_col($wpdb->prepare('SELECT id FROM ' . Schema::leads() . ' WHERE status <> %s AND updated_at < %s', Lead::ACTIVE, $cutoff)); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         if (!is_array($ids) || $ids === array()) {
             return 0;

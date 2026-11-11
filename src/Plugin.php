@@ -14,6 +14,7 @@ use Enle\DailyCron\Email\WpMailer;
 use Enle\DailyCron\Email\Writer;
 use Enle\DailyCron\Sequence\Enrolment;
 use Enle\DailyCron\Sequence\StopRules;
+use Enle\DailyCron\Sequence\TestSend;
 use Enle\DailyCron\Storage\FluentSignals;
 use Enle\DailyCron\Storage\Schema;
 use Enle\DailyCron\Storage\WpdbLeadStore;
@@ -44,6 +45,16 @@ final class Plugin
         add_action(Scheduler::DAILY, static fn () => self::runner()->run());
         add_action(Scheduler::CONTINUE, static fn () => self::runner()->run());
         add_action(Scheduler::SWEEP, static fn () => self::runner()->sweepStops());
+
+        // "Test the sequence" on the admin page: one event per test email.
+        add_action(TestSend::HOOK, static function ($email, $step, $name, $source_lead_id): void {
+            if (function_exists('set_time_limit')) {
+                set_time_limit(120); // Fresh budget for this email's Claude call(s).
+            }
+
+            self::schemaReady();
+            self::testSend()->send((string) $email, (string) $step, (string) $name, (int) $source_lead_id);
+        }, 10, 4);
 
         // A purchase or booking stops the sequence within minutes. Only a
         // check is scheduled here, so checkout and booking stay fast and
@@ -98,6 +109,11 @@ final class Plugin
             new Alerter(new WpMailer()),
             new Lock(),
         );
+    }
+
+    public static function testSend(): TestSend
+    {
+        return self::$services['test_send'] ??= new TestSend(self::writer(), new WpMailer(), self::store());
     }
 
     public static function writer(): Writer

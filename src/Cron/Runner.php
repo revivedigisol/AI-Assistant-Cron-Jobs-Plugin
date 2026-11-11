@@ -200,10 +200,7 @@ final class Runner
             ? $draft['subject']
             : sprintf('[Preview: %s to %s <%s>] %s', Steps::label($step), $lead->name !== '' ? $lead->name : 'lead', $lead->email, $draft['subject']);
 
-        $headers = array(
-            sprintf('From: %s <%s>', self::headerText((string) Settings::get('from_name')), Settings::get('from_email')),
-            'Reply-To: ' . Settings::get('reply_to'),
-        );
+        $headers = self::senderHeaders();
 
         if ($live) {
             $headers[] = 'List-Unsubscribe: <' . esc_url_raw($unsubscribe_url) . '>';
@@ -240,6 +237,15 @@ final class Runner
         if (StopRules::needsTeam($reason)) {
             $this->alerter->teamAction($lead, $reason);
         }
+    }
+
+    /** @return array<int,string> From and Reply-To, from the settings. */
+    public static function senderHeaders(): array
+    {
+        return array(
+            sprintf('From: %s <%s>', self::headerText((string) Settings::get('from_name')), Settings::get('from_email')),
+            'Reply-To: ' . Settings::get('reply_to'),
+        );
     }
 
     /** Strips characters that could break or inject a mail header. */

@@ -59,6 +59,7 @@ The plugin reads the key AI Assistant already stores (option `ai_assistant_claud
 
 = 1.0.1 - 2026-11-11 =
 * The admin page is now under AI Assistant → Idea follow-ups.
+* New "Test the sequence" box: sends Day 3, 7 and 14 to the addresses you enter, straight away.
 
 = 1.0.0 - 2026-11-09 =
 * First release. See CHANGELOG.md.

@@ -4,8 +4,12 @@ All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](ht
 
 ## [1.0.1] - 2026-11-11
 
+### Added
+- **Test the sequence** on the admin page: enter comma-separated emails (up to 5), pick the sample report or a lead's real report, and optionally a name to greet. Each address gets the Day 3, Day 7 and Day 14 emails within a minute or two, written by Claude and checked exactly like real ones, with "[Test Day N]" in the subject. Each email is its own WP-Cron event, so the page returns at once. Test sends work even when sending is off, never create or change a lead, and are logged as "test" in Recent activity. 75 tests.
+
 ### Changed
 - The admin page moved from Settings → Idea follow-ups to **AI Assistant → Idea follow-ups**, next to Prompts and WhatsApp. If AI Assistant's menu isn't there, it falls back to Settings. Links in alert emails and redirects now use `admin.php?page=enle-daily-cron`, which works under either menu.
+- Activity rows from test sends are deleted after the retention period like other finished data.
 
 ## [1.0.0] - 2026-11-09
 

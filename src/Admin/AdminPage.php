@@ -11,6 +11,7 @@ use Enle\DailyCron\Plugin;
 use Enle\DailyCron\Sequence\StepPicker;
 use Enle\DailyCron\Sequence\Steps;
 use Enle\DailyCron\Sequence\StopRules;
+use Enle\DailyCron\Sequence\TestSend;
 use Enle\DailyCron\Settings;
 
 defined('ABSPATH') || exit;
@@ -47,6 +48,41 @@ final class AdminPage
         add_action('admin_post_enle_dc_save', array(self::class, 'handleSave'));
         add_action('admin_post_enle_dc_run', array(self::class, 'handleRun'));
         add_action('admin_post_enle_dc_stop_lead', array(self::class, 'handleStopLead'));
+        add_action('admin_post_enle_dc_test_send', array(self::class, 'handleTestSend'));
+    }
+
+    public static function handleTestSend(): void
+    {
+        self::guard('enle_dc_test_send');
+
+        $raw    = isset($_POST['test_emails']) ? sanitize_textarea_field(wp_unslash((string) $_POST['test_emails'])) : '';
+        $name   = isset($_POST['test_name']) ? substr(sanitize_text_field(wp_unslash((string) $_POST['test_name'])), 0, 80) : '';
+        $source = isset($_POST['test_source']) ? absint($_POST['test_source']) : TestSend::SAMPLE;
+        $parsed = TestSend::parseEmails($raw);
+
+        if ($parsed['valid'] === array()) {
+            self::back('test_none', array('invalid' => count($parsed['invalid'])));
+        }
+
+        if ($source !== TestSend::SAMPLE && Plugin::store()->find($source) === null) {
+            $source = TestSend::SAMPLE;
+        }
+
+        $queued = TestSend::queue($parsed['valid'], $name, $source, time());
+        Plugin::store()->log(0, '', 'test_queued', sprintf(
+            'Test run by %s: %d emails to %s.',
+            wp_get_current_user()->user_login,
+            $queued,
+            implode(', ', $parsed['valid'])
+        ));
+
+        spawn_cron();
+
+        self::back('test_queued', array(
+            'to'      => count($parsed['valid']),
+            'invalid' => count($parsed['invalid']),
+            'dropped' => $parsed['dropped'],
+        ));
     }
 
     public static function handleSave(): void
@@ -138,6 +174,8 @@ final class AdminPage
         );
         echo '</form>';
 
+        self::renderTestSend($leads);
+
         self::renderSettings($s);
         self::renderLeads($leads);
         self::renderLog($log);
@@ -189,6 +227,42 @@ final class AdminPage
 
         echo '</tbody></table>';
         submit_button(__('Save settings', 'enle-daily-cron'));
+        echo '</form>';
+    }
+
+    /** @param array<int,Lead> $leads */
+    private static function renderTestSend(array $leads): void
+    {
+        echo '<h2>' . esc_html__('Test the sequence', 'enle-daily-cron') . '</h2>';
+        echo '<p class="description" style="max-width:900px">' . esc_html(sprintf(
+            /* translators: %d: max addresses */
+            __('Sends the Day 3, Day 7 and Day 14 emails to each address now, written by Claude exactly as a lead would get them, with "[Test Day N]" in the subject. Up to %d addresses. They go out in the background over a minute or two; check Recent activity below. Works even when sending is off, and no lead is changed.', 'enle-daily-cron'),
+            TestSend::MAX_RECIPIENTS
+        )) . '</p>';
+
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+        wp_nonce_field('enle_dc_test_send');
+        echo '<input type="hidden" name="action" value="enle_dc_test_send"><table class="form-table" role="presentation"><tbody>';
+
+        echo '<tr><th scope="row"><label for="enle-dc-test-emails">' . esc_html__('Send to', 'enle-daily-cron') . '</label></th><td>'
+            . '<input type="text" class="large-text" id="enle-dc-test-emails" name="test_emails" required placeholder="you@example.com, colleague@example.com">'
+            . '<p class="description">' . esc_html__('Separate addresses with commas.', 'enle-daily-cron') . '</p></td></tr>';
+
+        echo '<tr><th scope="row"><label for="enle-dc-test-source">' . esc_html__('Report to use', 'enle-daily-cron') . '</label></th><td><select id="enle-dc-test-source" name="test_source">'
+            . '<option value="' . esc_attr((string) TestSend::SAMPLE) . '">' . esc_html__('Sample report (handmade beaded bags)', 'enle-daily-cron') . '</option>';
+
+        foreach ($leads as $lead) {
+            echo '<option value="' . esc_attr((string) $lead->id) . '">' . esc_html(sprintf('%s: %s', $lead->name !== '' ? $lead->name : $lead->email, $lead->report_title)) . '</option>';
+        }
+
+        echo '</select></td></tr>';
+
+        echo '<tr><th scope="row"><label for="enle-dc-test-name">' . esc_html__('Greet as', 'enle-daily-cron') . '</label></th><td>'
+            . '<input type="text" class="regular-text" id="enle-dc-test-name" name="test_name" maxlength="80">'
+            . '<p class="description">' . esc_html__('Optional name for "Hi …,". Leave empty to use the chosen lead\'s name, or "Hi there," with the sample report.', 'enle-daily-cron') . '</p></td></tr>';
+
+        echo '</tbody></table>';
+        submit_button(__('Send test run', 'enle-daily-cron'), 'secondary');
         echo '</form>';
     }
 
@@ -247,7 +321,7 @@ final class AdminPage
         echo '<table class="widefat striped"><thead><tr><th>' . esc_html__('When (UTC)', 'enle-daily-cron') . '</th><th>' . esc_html__('Lead', 'enle-daily-cron') . '</th><th>' . esc_html__('Step', 'enle-daily-cron') . '</th><th>' . esc_html__('What', 'enle-daily-cron') . '</th><th>' . esc_html__('Detail', 'enle-daily-cron') . '</th></tr></thead><tbody>';
 
         foreach ($log as $row) {
-            echo '<tr><td>' . esc_html((string) $row['created_at']) . '</td><td>' . esc_html((string) $row['lead_id']) . '</td><td>' . esc_html((string) $row['step']) . '</td><td>' . esc_html((string) $row['action']) . '</td><td>' . esc_html((string) $row['detail']);
+            echo '<tr><td>' . esc_html((string) $row['created_at']) . '</td><td>' . esc_html((int) $row['lead_id'] === 0 ? __('test', 'enle-daily-cron') : (string) $row['lead_id']) . '</td><td>' . esc_html((string) $row['step']) . '</td><td>' . esc_html((string) $row['action']) . '</td><td>' . esc_html((string) $row['detail']);
 
             if ((string) $row['body'] !== '') {
                 echo '<details><summary>' . esc_html((string) $row['subject']) . '</summary><div style="white-space:pre-wrap;max-width:640px;padding:8px 0">' . esc_html((string) $row['body']) . '</div></details>';
@@ -321,6 +395,26 @@ final class AdminPage
                 : sprintf(__('Run finished: %1$d sent, %2$d failed.', 'enle-daily-cron'), absint($_GET['sent'] ?? 0), absint($_GET['failed'] ?? 0)); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
             echo '<div class="notice notice-info is-dismissible"><p>' . esc_html($text) . '</p></div>';
+        } elseif ($done === 'test_queued' || $done === 'test_none') {
+            // phpcs:disable WordPress.Security.NonceVerification.Recommended
+            $to      = absint($_GET['to'] ?? 0);
+            $invalid = absint($_GET['invalid'] ?? 0);
+            $dropped = absint($_GET['dropped'] ?? 0);
+            // phpcs:enable
+
+            $text = $done === 'test_none'
+                ? __('No valid email address was given, so nothing was sent.', 'enle-daily-cron')
+                : sprintf(__('Test run started: Day 3, 7 and 14 are on their way to %d address(es). They arrive over the next minute or two; see Recent activity.', 'enle-daily-cron'), $to);
+
+            if ($invalid > 0) {
+                $text .= ' ' . sprintf(__('%d entry(ies) weren\'t valid emails and were skipped.', 'enle-daily-cron'), $invalid);
+            }
+
+            if ($dropped > 0) {
+                $text .= ' ' . sprintf(__('Only the first %1$d addresses were used; %2$d more were left out.', 'enle-daily-cron'), TestSend::MAX_RECIPIENTS, $dropped);
+            }
+
+            echo '<div class="notice ' . ($done === 'test_none' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($text) . '</p></div>';
         } elseif (isset($messages[$done])) {
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($messages[$done]) . '</p></div>';
         }

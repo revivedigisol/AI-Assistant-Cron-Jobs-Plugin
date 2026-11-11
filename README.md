@@ -45,6 +45,7 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
 - **Dry run:** emails are written and checked as in live mode but go to the preview inbox with a `[Preview: … to Name <email>]` subject. Each lead's schedule still moves on.
 - **Alerts** (to `contact@enle.org` by default): a summary email when a run had failures or the previous run was more than 36 hours earlier, and an "Action needed" email for each purchase or booking.
 - **Admin page** (AI Assistant → Idea follow-ups): status, warnings, settings, leads (with a Stop button), and recent activity, including the full text of every email sent.
+- **Test the sequence** (same page): comma-separated emails get Day 3, 7 and 14 straight away, from the sample report or a real lead's report. Nothing about any lead changes.
 
 ## WP-CLI
 
@@ -68,7 +69,7 @@ wp enle-dc preview <lead-id> [--step=day7]    # writes with Claude and prints; s
 
 ```
 composer --working-dir=tools install   # once: PHPUnit into tools/vendor (not deployed)
-tools/vendor/bin/phpunit               # 69 tests, no WordPress or database needed
+tools/vendor/bin/phpunit               # 75 tests, no WordPress or database needed
 ```
 
 Tests use WordPress stand-ins (`tests/Support/wordpress.php`) and fakes for the database, Claude, mail and the lock (`tests/Support/Fakes.php`). The SQL in `src/Storage/` and the admin page are checked by hand on a WordPress site. Every change gets a version bump (`Version:` header and `ENLE_DC_VERSION`) and a `CHANGELOG.md` entry.
