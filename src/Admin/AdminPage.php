@@ -16,7 +16,8 @@ use Enle\DailyCron\Settings;
 defined('ABSPATH') || exit;
 
 /**
- * Settings → Idea follow-ups. Status, settings, leads and the send log.
+ * AI Assistant → Idea follow-ups (Settings → Idea follow-ups when AI
+ * Assistant's menu is missing). Status, settings, leads and the send log.
  * Every action goes through admin-post.php with a capability check and a
  * nonce; all output is escaped.
  */
@@ -25,17 +26,23 @@ final class AdminPage
     public const SLUG       = 'enle-daily-cron';
     public const CAPABILITY = 'manage_options';
 
+    /** AI Assistant's top-level menu slug. */
+    public const PARENT = 'ai-assistant';
+
     public static function register(): void
     {
+        // Priority 20: after AI Assistant has added its top-level menu (priority 10).
         add_action('admin_menu', static function (): void {
-            add_options_page(
-                __('Idea follow-ups', 'enle-daily-cron'),
-                __('Idea follow-ups', 'enle-daily-cron'),
-                self::CAPABILITY,
-                self::SLUG,
-                array(self::class, 'render')
-            );
-        });
+            global $admin_page_hooks;
+
+            $title = __('Idea follow-ups', 'enle-daily-cron');
+
+            if (isset($admin_page_hooks[self::PARENT])) {
+                add_submenu_page(self::PARENT, $title, $title, self::CAPABILITY, self::SLUG, array(self::class, 'render'));
+            } else {
+                add_options_page($title, $title, self::CAPABILITY, self::SLUG, array(self::class, 'render'));
+            }
+        }, 20);
 
         add_action('admin_post_enle_dc_save', array(self::class, 'handleSave'));
         add_action('admin_post_enle_dc_run', array(self::class, 'handleRun'));
@@ -336,7 +343,13 @@ final class AdminPage
     /** @param array<string,int|string> $args */
     private static function back(string $done, array $args = array()): never
     {
-        wp_safe_redirect(add_query_arg(array_merge(array('page' => self::SLUG, 'enle_dc_done' => $done), $args), admin_url('options-general.php')));
+        wp_safe_redirect(add_query_arg(array_merge(array('enle_dc_done' => $done), $args), self::url()));
         exit;
+    }
+
+    /** The page's URL. admin.php?page= works under either parent menu. */
+    public static function url(): string
+    {
+        return admin_url('admin.php?page=' . self::SLUG);
     }
 }

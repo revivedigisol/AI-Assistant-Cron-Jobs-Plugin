@@ -4,7 +4,7 @@ Tags: email sequence, follow-up, cron, fluentcrm, claude
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: Proprietary
 Private plugin for enle.org (site 1, "Enle Business Hub") only.
 
@@ -38,7 +38,7 @@ The full documentation is in README.md, and the design and the decisions behind 
 1. Copy the `enle-daily-cron` folder to `wp-content/plugins/`. Update AI Assistant to 1.10.0 or later.
 2. Activate the plugin on enle.org only. Network activation is refused.
 3. Make sure FluentSMTP can send as contact@enle.org (a Gmail "Send mail as" address on enlelimited@gmail.com).
-4. Go to Settings → Idea follow-ups, tick "Send emails", leave Mode on "Dry run", and save.
+4. Go to AI Assistant → Idea follow-ups, tick "Send emails", leave Mode on "Dry run", and save.
 5. After a week of reviewing the previews sent to contact@enle.org, switch Mode to "Live".
 
 == Frequently Asked Questions ==
@@ -56,6 +56,9 @@ Emails are written and checked exactly as in live mode, but they all go to the p
 The plugin reads the key AI Assistant already stores (option `ai_assistant_claude_api_key`). To use a different key, define `ENLE_DC_CLAUDE_API_KEY` in wp-config.php.
 
 == Changelog ==
+
+= 1.0.1 - 2026-11-11 =
+* The admin page is now under AI Assistant → Idea follow-ups.
 
 = 1.0.0 - 2026-11-09 =
 * First release. See CHANGELOG.md.

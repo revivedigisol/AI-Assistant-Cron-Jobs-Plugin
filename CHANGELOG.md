@@ -2,6 +2,11 @@
 
 All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Each release bumps both the `Version:` header and `ENLE_DC_VERSION` in `enle-daily-cron.php`.
 
+## [1.0.1] - 2026-11-11
+
+### Changed
+- The admin page moved from Settings → Idea follow-ups to **AI Assistant → Idea follow-ups**, next to Prompts and WhatsApp. If AI Assistant's menu isn't there, it falls back to Settings. Links in alert emails and redirects now use `admin.php?page=enle-daily-cron`, which works under either menu.
+
 ## [1.0.0] - 2026-11-09
 
 ### Added

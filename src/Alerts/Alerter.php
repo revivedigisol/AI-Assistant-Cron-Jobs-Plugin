@@ -82,6 +82,6 @@ final class Alerter
 
     private static function adminUrl(): string
     {
-        return admin_url('options-general.php?page=enle-daily-cron');
+        return admin_url('admin.php?page=enle-daily-cron');
     }
 }
