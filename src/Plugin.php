@@ -120,7 +120,8 @@ final class Plugin
     {
         return self::$services['writer'] ??= new Writer(
             new ClaudeClient(ClaudeClient::apiKey(), (string) Settings::get('model')),
-            self::links()
+            self::links(),
+            Settings::signoffName()
         );
     }
 

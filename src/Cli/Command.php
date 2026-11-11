@@ -110,7 +110,7 @@ final class Command
     }
 
     /**
-     * Adds a test lead with a sample report (Mariam's beaded bags), dated in the past.
+     * Adds a test lead with a sample report (Amara's beaded bags), dated in the past.
      *
      * ## OPTIONS
      *
@@ -118,7 +118,7 @@ final class Command
      * : Where its emails go in live mode. Use a team inbox.
      *
      * [--name=<name>]
-     * : Default: "Mariam Test".
+     * : Default: "Amara Test".
      *
      * [--days-ago=<days>]
      * : How long ago the "report" was made. Default: 3 (Day 3 is due).
@@ -134,7 +134,7 @@ final class Command
         $lead = new Lead(
             id: 0,
             email: $email,
-            name: sanitize_text_field((string) ($assoc['name'] ?? 'Mariam Test')),
+            name: sanitize_text_field((string) ($assoc['name'] ?? 'Amara Test')),
             crm_contact_id: 0,
             report_title: 'Idea Validation: Handmade Beaded Bags (TEST)',
             report_url: '',

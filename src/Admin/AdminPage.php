@@ -205,6 +205,7 @@ final class AdminPage
             'preview_email'   => __('Preview inbox (dry run)', 'enle-daily-cron'),
             'alert_email'     => __('Alerts go to', 'enle-daily-cron'),
             'from_name'       => __('From name', 'enle-daily-cron'),
+            'signoff_name'    => __('Sign-off name (empty: From name before " at ")', 'enle-daily-cron'),
             'from_email'      => __('From address', 'enle-daily-cron'),
             'reply_to'        => __('Reply-To', 'enle-daily-cron'),
             'programme_url'   => __('Market Validation link', 'enle-daily-cron'),

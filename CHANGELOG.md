@@ -2,6 +2,12 @@
 
 All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Each release bumps both the `Version:` header and `ENLE_DC_VERSION` in `enle-daily-cron.php`.
 
+## [1.0.2] - 2026-11-11
+
+### Fixed
+- **The sign-off now follows the sender.** It was always "Monsur", whatever the From name said. Emails are now signed with the new **Sign-off name** setting, or, when that is empty, the From name up to " at " ("Mariam at Enle" signs as "Mariam"). Claude is asked for that name and every draft is checked for it.
+- The example founder in Claude's instructions and the sample report is now "Amara", so the examples don't share a name with the sender. 80 tests.
+
 ## [1.0.1] - 2026-11-11
 
 ### Added

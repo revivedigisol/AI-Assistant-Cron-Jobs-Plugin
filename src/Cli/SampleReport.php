@@ -15,7 +15,7 @@ final class SampleReport
     public static function sections(): array
     {
         return array(
-            'summary'     => 'Mariam makes handmade beaded bags and wants to sell them made to order. The craft is strong; the open question is whether the right buyers will pay a price that makes the work worthwhile.',
+            'summary'     => 'Amara makes handmade beaded bags and wants to sell them made to order. The craft is strong; the open question is whether the right buyers will pay a price that makes the work worthwhile.',
             'offer'       => 'Made-to-order beaded bags matched exactly to the colour of a customer\'s outfit fabric, for events.',
             'icp'         => 'First customers: women who go to events often and usually have a date 2–6 weeks away. Second group: bridal parties, where one order can be 4–8 bags.',
             'positioning' => 'Positioning and message: "handmade" alone won\'t set you apart. Exact colour matching to a customer\'s fabric will. Suggested line: "Send me your fabric. I\'ll bead you a bag that matches it."',

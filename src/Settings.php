@@ -27,6 +27,8 @@ final class Settings
             'preview_email'    => 'contact@enle.org',
             'from_email'       => 'contact@enle.org',
             'from_name'        => 'Monsur at Enle',
+            // Empty: the From name up to " at " ("Monsur at Enle" signs as "Monsur").
+            'signoff_name'     => '',
             'reply_to'         => 'contact@enle.org',
             'programme_url'    => 'https://enle.org/market-validation/',
             'booking_url'      => 'https://enle.org/book-an-appointment-now/',
@@ -53,6 +55,21 @@ final class Settings
     }
 
     /**
+     * The name the emails are signed with: the "Sign-off name" setting, or
+     * else the From name up to " at " ("Mariam at Enle" gives "Mariam").
+     */
+    public static function signoffName(): string
+    {
+        $name = trim((string) self::get('signoff_name'));
+
+        if ($name === '') {
+            $name = trim((string) preg_split('/\s+at\s+/i', (string) self::get('from_name'))[0]);
+        }
+
+        return $name !== '' ? $name : 'Monsur';
+    }
+
+    /**
      * @param array<string,mixed> $input Raw input (admin form or stored option).
      * @return array<string,mixed>
      */
@@ -73,6 +90,8 @@ final class Settings
         $out['from_name'] = isset($input['from_name']) && trim((string) $input['from_name']) !== ''
             ? substr(sanitize_text_field((string) $input['from_name']), 0, 80)
             : $d['from_name'];
+
+        $out['signoff_name'] = isset($input['signoff_name']) ? substr(trim(sanitize_text_field((string) $input['signoff_name'])), 0, 40) : $d['signoff_name'];
 
         foreach (array('programme_url', 'booking_url') as $key) {
             $url       = isset($input[$key]) ? esc_url_raw((string) $input[$key], array('https')) : '';

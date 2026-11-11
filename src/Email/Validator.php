@@ -20,7 +20,7 @@ final class Validator
      * @param array{programme_url:string,booking_url:string,programme_price:string} $links
      * @return array<int,string> Problems found; empty means OK to send.
      */
-    public static function check(string $step, string $subject, string $body, string $first_name, array $links): array
+    public static function check(string $step, string $subject, string $body, string $first_name, array $links, string $signer = 'Monsur'): array
     {
         $errors = array();
 
@@ -51,8 +51,8 @@ final class Validator
             $errors[] = sprintf('The email must open with "%s".', $first_name !== '' ? 'Hi ' . $first_name . ',' : 'Hi there,');
         }
 
-        if (!preg_match('/Monsur\s*\R\s*Enle Business Hub\s*$/u', rtrim($body))) {
-            $errors[] = 'The email must end with the sign-off "Warm regards," / "Monsur" / "Enle Business Hub".';
+        if (!preg_match('/' . preg_quote($signer, '/') . '\s*\R\s*Enle Business Hub\s*$/u', rtrim($body))) {
+            $errors[] = sprintf('The email must end with the sign-off "Warm regards," / "%s" / "Enle Business Hub".', $signer);
         }
 
         // Links: only the ones the brief allows, exactly as given.

@@ -41,7 +41,7 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
      A purchase or booking also emails the team straight away. A purchase or booking also triggers a check within a minute (`fluent_cart/order_paid`, `fluent_booking/after_booking_scheduled`).
   2. **Pick the step.** A step falls due on its calendar day (UTC) and can go out for 7 days after that. If it's later than that, it's skipped. At most one email per lead per run, and never two within 2 days.
   3. **Write.** Claude writes the email (structured JSON output, model `claude-opus-5-5`, refusal fallback on). The plugin then checks it: greeting, sign-off, length, no Markdown/HTML/placeholders, and the step rules (Day 3: no price and no links; Day 7: the price and programme link; Day 14: the three numbered options). Only the configured enle.org links are allowed. If a draft fails, Claude gets one retry with the reasons. If that fails too, nothing is sent and the team is alerted; the next run tries again.
-  4. **Send.** `wp_mail()` with From `Monsur at Enle <contact@enle.org>`, Reply-To `contact@enle.org`, `List-Unsubscribe` + one-click, and an unsubscribe link in the footer.
+  4. **Send.** `wp_mail()` with From `Monsur at Enle <contact@enle.org>` (the From name and the sign-off name are settings; by default the email is signed with the From name before " at "), Reply-To `contact@enle.org`, `List-Unsubscribe` + one-click, and an unsubscribe link in the footer.
 - **Dry run:** emails are written and checked as in live mode but go to the preview inbox with a `[Preview: … to Name <email>]` subject. Each lead's schedule still moves on.
 - **Alerts** (to `contact@enle.org` by default): a summary email when a run had failures or the previous run was more than 36 hours earlier, and an "Action needed" email for each purchase or booking.
 - **Admin page** (AI Assistant → Idea follow-ups): status, warnings, settings, leads (with a Stop button), and recent activity, including the full text of every email sent.
@@ -69,7 +69,7 @@ wp enle-dc preview <lead-id> [--step=day7]    # writes with Claude and prints; s
 
 ```
 composer --working-dir=tools install   # once: PHPUnit into tools/vendor (not deployed)
-tools/vendor/bin/phpunit               # 75 tests, no WordPress or database needed
+tools/vendor/bin/phpunit               # 80 tests, no WordPress or database needed
 ```
 
 Tests use WordPress stand-ins (`tests/Support/wordpress.php`) and fakes for the database, Claude, mail and the lock (`tests/Support/Fakes.php`). The SQL in `src/Storage/` and the admin page are checked by hand on a WordPress site. Every change gets a version bump (`Version:` header and `ENLE_DC_VERSION`) and a `CHANGELOG.md` entry.
