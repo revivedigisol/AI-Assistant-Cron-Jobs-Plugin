@@ -17,7 +17,7 @@ use Enle\DailyCron\Settings;
 defined('ABSPATH') || exit;
 
 /**
- * AI Assistant → Idea follow-ups (Settings → Idea follow-ups when AI
+ * CRM Agent → Idea follow-ups (Settings → Idea follow-ups when AI
  * Assistant's menu is missing). Status, settings, leads and the send log.
  * Every action goes through admin-post.php with a capability check and a
  * nonce; all output is escaped.
@@ -33,12 +33,12 @@ final class AdminPage
     /** Rows per page in Leads. */
     public const LEADS_PER_PAGE = 20;
 
-    /** AI Assistant's top-level menu slug. */
+    /** CRM Agent's top-level menu slug. */
     public const PARENT = 'ai-assistant';
 
     public static function register(): void
     {
-        // Priority 20: after AI Assistant has added its top-level menu (priority 10).
+        // Priority 20: after CRM Agent has added its top-level menu (priority 10).
         add_action('admin_menu', static function (): void {
             global $admin_page_hooks;
 
@@ -469,11 +469,11 @@ final class AdminPage
         $out = array();
 
         if (ClaudeClient::apiKey() === '') {
-            $out[] = __('No Claude API key found: emails can\'t be written. Set it in AI Assistant settings (or the ENLE_DC_CLAUDE_API_KEY constant).', 'enle-daily-cron');
+            $out[] = __('No Claude API key found: emails can\'t be written. Set it in CRM Agent settings (or the ENLE_DC_CLAUDE_API_KEY constant).', 'enle-daily-cron');
         }
 
         if (!defined('AI_ASSISTANT_VERSION') || version_compare((string) AI_ASSISTANT_VERSION, '1.10.0', '<')) {
-            $out[] = __('AI Assistant 1.10.0 or later is needed: earlier versions don\'t tell this plugin when a report is made, so no leads get added.', 'enle-daily-cron');
+            $out[] = __('CRM Agent 1.10.0 or later is needed: earlier versions don\'t tell this plugin when a report is made, so no leads get added.', 'enle-daily-cron');
         }
 
         if (!Plugin::signals()->repliedTagExists()) {

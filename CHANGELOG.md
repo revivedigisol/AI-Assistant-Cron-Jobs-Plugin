@@ -2,6 +2,11 @@
 
 All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Each release bumps both the `Version:` header and `ENLE_DC_VERSION` in `enle-daily-cron.php`.
 
+## [1.0.4] - 2026-11-15
+
+### Changed
+- The AI Assistant plugin is now called **CRM Agent**. The admin menu (CRM Agent → Idea follow-ups), warnings and docs use the new name. Nothing else changes: the menu slug, option names and the `enle_idea_validation_report_ready` action are the same.
+
 ## [1.0.3] - 2026-11-11
 
 ### Added
