@@ -214,7 +214,7 @@ final class AdminPage
         echo '<tr><th scope="row">' . esc_html__('Run hour (UTC)', 'enle-daily-cron') . '</th><td><input type="number" min="0" max="23" name="enle_dc[run_hour]" value="' . esc_attr((string) $s['run_hour']) . '" class="small-text"></td></tr>';
 
         $offsets = Settings::cleanOffsets($s['day_offsets'] ?? null);
-        echo '<tr><th scope="row">' . esc_html__('Email days', 'enle-daily-cron') . '</th><td>';
+        echo '<tr id="enle-dc-days-row"' . ($s['mode'] === Settings::MODE_NOW ? ' style="display:none"' : '') . '><th scope="row">' . esc_html__('Email days', 'enle-daily-cron') . '</th><td>';
         foreach ($offsets as $i => $day) {
             echo '<label style="margin-right:14px">' . esc_html(sprintf(__('Email %d: day', 'enle-daily-cron'), $i + 1)) . ' <input type="number" min="1" max="' . esc_attr((string) Settings::MAX_OFFSET_DAY) . '" name="enle_dc[day_offsets][' . (int) $i . ']" value="' . esc_attr((string) $day) . '" class="small-text"></label>';
         }
@@ -249,6 +249,8 @@ final class AdminPage
             . '<p class="description">' . esc_html__('Comma-separated. A booking for any of these stops the sequence.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '</tbody></table>';
+        // The email days only matter in Live mode: hide them while "Send now" is selected.
+        echo '<script>(function(){var m=document.getElementsByName("enle_dc[mode]")[0],r=document.getElementById("enle-dc-days-row");if(!m||!r)return;var t=function(){r.style.display=m.value==="now"?"none":""};m.addEventListener("change",t);t();})();</script>';
         submit_button(__('Save settings', 'enle-daily-cron'), 'primary', 'submit', true, array('data-loading' => __('Saving…', 'enle-daily-cron')));
         echo '</form>';
     }
