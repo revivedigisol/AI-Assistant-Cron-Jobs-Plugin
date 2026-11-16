@@ -15,6 +15,9 @@ final class Settings
     public const MODE_DRY_RUN = 'dry_run';
     public const MODE_LIVE    = 'live';
 
+    public const TIMING_SCHEDULE = 'schedule';
+    public const TIMING_NOW      = 'now';
+
     /** @return array<string,mixed> */
     public static function defaults(): array
     {
@@ -38,7 +41,54 @@ final class Settings
             'booking_event_ids' => array(27, 28),
             'replied_tag'      => 'Replied',
             'retention_days'   => 180,
+            // Days after the report that email 1, 2 and 3 go out.
+            'day_offsets'      => array(3, 7, 14),
+            // 'schedule': each email on its day. 'now': the next email goes out on the next run, whatever day it is.
+            'timing'           => self::TIMING_SCHEDULE,
         );
+    }
+
+    public const MAX_OFFSET_DAY = 90;
+    public const MIN_OFFSET_GAP = 2;
+
+    /**
+     * Three whole days, each at least MIN_OFFSET_GAP after the one before and
+     * no later than MAX_OFFSET_DAY. Anything else falls back to the defaults,
+     * so a bad value can never reorder or collapse the sequence.
+     *
+     * @param mixed $raw
+     * @return array<int,int>
+     */
+    public static function cleanOffsets(mixed $raw): array
+    {
+        $default = self::defaults()['day_offsets'];
+
+        if (!is_array($raw)) {
+            return $default;
+        }
+
+        $days = array_map('intval', array_values($raw));
+
+        if (count($days) !== count($default)) {
+            return $default;
+        }
+
+        foreach ($days as $i => $day) {
+            $min = $i === 0 ? 1 : $days[$i - 1] + self::MIN_OFFSET_GAP;
+            if ($day < $min || $day > self::MAX_OFFSET_DAY) {
+                return $default;
+            }
+        }
+
+        return $days;
+    }
+
+    /** @return array<int,int> */
+    public static function dayOffsets(): array
+    {
+        $stored = get_option(self::OPTION, array());
+
+        return self::cleanOffsets(is_array($stored) ? ($stored['day_offsets'] ?? null) : null);
     }
 
     /** @return array<string,mixed> */
@@ -120,6 +170,10 @@ final class Settings
 
         $out['retention_days'] = isset($input['retention_days']) ? max(30, min(730, (int) $input['retention_days'])) : $d['retention_days'];
 
+        $out['timing'] = isset($input['timing']) && $input['timing'] === self::TIMING_NOW ? self::TIMING_NOW : self::TIMING_SCHEDULE;
+
+        $out['day_offsets'] = self::cleanOffsets($input['day_offsets'] ?? null);
+
         return $out;
     }
 
@@ -130,6 +184,11 @@ final class Settings
         update_option(self::OPTION, $clean, false);
 
         return $clean;
+    }
+
+    public static function sendsNow(): bool
+    {
+        return self::get('timing') === self::TIMING_NOW;
     }
 
     public static function isLive(): bool

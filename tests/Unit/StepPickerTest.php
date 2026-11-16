@@ -4,7 +4,9 @@ namespace Enle\DailyCron\Tests\Unit;
 
 use Enle\DailyCron\Sequence\StepPicker;
 use Enle\DailyCron\Sequence\Steps;
+use Enle\DailyCron\Settings;
 use Enle\DailyCron\Tests\TestCase;
+use WpStub;
 
 final class StepPickerTest extends TestCase
 {
@@ -15,6 +17,36 @@ final class StepPickerTest extends TestCase
         $this->assertNull($decision['send']);
         $this->assertFalse($decision['complete']);
         $this->assertSame('not_due_yet', $decision['reason']);
+    }
+
+    public function testEmailDaysAreEditable(): void
+    {
+        WpStub::$options[Settings::OPTION] = array('day_offsets' => array(5, 10, 20));
+
+        $this->assertSame(array(Steps::DAY3 => 5, Steps::DAY7 => 10, Steps::DAY14 => 20), Steps::offsets());
+        $this->assertNull(StepPicker::decide(self::lead(4), self::NOW)['send']);
+        $this->assertSame(Steps::DAY3, StepPicker::decide(self::lead(5), self::NOW)['send']);
+        $this->assertSame("Day 5: Here's what matters most", Steps::label(Steps::DAY3));
+    }
+
+    public function testSendNowIgnoresTheDaysAndTheGap(): void
+    {
+        $lead = self::lead(0);
+        $this->assertNull(StepPicker::decide($lead, self::NOW)['send']);
+        $this->assertSame(Steps::DAY3, StepPicker::decide($lead, self::NOW, true)['send']);
+
+        $lead->sent = array(Steps::DAY3 => self::NOW - 3 * DAY_IN_SECONDS);
+        $this->assertSame(Steps::DAY7, StepPicker::decide($lead, self::NOW, true)['send']);
+
+        $lead->sent = array(Steps::DAY3 => self::NOW - 3600);
+        $this->assertSame(Steps::DAY7, StepPicker::decide($lead, self::NOW, true)['send']);
+    }
+
+    public function testBadEmailDaysFallBackToTheDefaults(): void
+    {
+        foreach (array(array(7, 3, 14), array(3, 4, 14), array(0, 7, 14), array(3, 7, 400), array(3, 7), 'x') as $bad) {
+            $this->assertSame(array(3, 7, 14), Settings::cleanOffsets($bad));
+        }
     }
 
     public function testDayThreeGoesOutOnTheThirdCalendarDayWhateverTimeTheReportWasMade(): void

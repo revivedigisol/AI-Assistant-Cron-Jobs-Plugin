@@ -156,7 +156,7 @@ final class Runner
                 return;
             }
 
-            $decision = StepPicker::decide($lead, $now);
+            $decision = StepPicker::decide($lead, $now, Settings::sendsNow());
 
             foreach ($decision['skip'] as $step) {
                 $lead->skipped[] = $step;
@@ -166,6 +166,19 @@ final class Runner
 
             if ($decision['send'] !== null) {
                 $this->sendStep($lead, $decision['send'], $now, $summary);
+
+                // "Send now" sends every remaining email, in order, in this run.
+                // A failed send stops the chain so a later email never goes out before an earlier one.
+                while (Settings::sendsNow() && isset($lead->sent[$decision['send']])) {
+                    $next = StepPicker::nextStep($lead);
+
+                    if ($next === '') {
+                        break;
+                    }
+
+                    $decision['send'] = $next;
+                    $this->sendStep($lead, $next, $now, $summary);
+                }
             }
 
             if (StepPicker::nextStep($lead) === '') {

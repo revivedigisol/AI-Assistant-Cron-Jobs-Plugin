@@ -148,6 +148,6 @@ final class TestSend
 
     private static function dayLabel(string $step): string
     {
-        return 'Day ' . Steps::offsets()[$step];
+        return 'Day ' . Steps::day($step);
     }
 }

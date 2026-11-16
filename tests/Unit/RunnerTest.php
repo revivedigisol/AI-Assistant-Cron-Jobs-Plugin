@@ -119,6 +119,23 @@ final class RunnerTest extends TestCase
         $this->assertSame(array('previewed:day3'), $this->store->actions($id));
     }
 
+    public function testSendNowSendsOnlyTheRemainingEmailsInOrder(): void
+    {
+        WpStub::$options[Settings::OPTION] = array('enabled' => true, 'mode' => Settings::MODE_LIVE, 'timing' => Settings::TIMING_NOW);
+        $fresh             = $this->add(self::lead(0));
+        $partway           = $this->add(self::lead(1, array('email' => 'b@example.com', 'sent' => array(Steps::DAY3 => self::NOW - 5 * DAY_IN_SECONDS))));
+        $this->ai->replies = array(
+            self::validDraft(Steps::DAY3), self::validDraft(Steps::DAY7), self::validDraft(Steps::DAY14),
+            self::validDraft(Steps::DAY7), self::validDraft(Steps::DAY14),
+        );
+
+        $this->runner()->run(false, self::NOW);
+
+        $this->assertSame(array('sent:day3', 'sent:day7', 'sent:day14', 'completed'), $this->store->actions($fresh));
+        $this->assertSame(array('sent:day7', 'sent:day14', 'completed'), $this->store->actions($partway));
+        $this->assertCount(5, $this->mailer->sent);
+    }
+
     public function testNothingIsSentBeforeTheStepIsDue(): void
     {
         $this->add(self::lead(1));

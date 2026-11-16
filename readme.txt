@@ -4,7 +4,7 @@ Tags: email sequence, follow-up, cron, fluentcrm, claude
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: Proprietary
 Private plugin for enle.org (site 1, "Enle Business Hub") only.
 
@@ -12,7 +12,7 @@ Sends Idea Validation leads the Day 3, 7 and 14 emails of Enle's Idea-to-Market 
 
 == Description ==
 
-When CRM Agent (1.10.0+) delivers an Idea Validation Report, it fires `enle_idea_validation_report_ready`, and this plugin adds the founder to the sequence. Once a day, at 09:00 UTC by default, it sends each active lead the next email:
+When agentCRM (1.10.0+) delivers an Idea Validation Report, it fires `enle_idea_validation_report_ready`, and this plugin adds the founder to the sequence. Once a day, at 09:00 UTC by default, it sends each active lead the next email:
 
 * **Day 3:** one finding from their report and one small action. No price, no pitch, no links.
 * **Day 7:** how to test the idea with real buyers. Market Validation (£1,000), with the programme link and the consultation link.
@@ -35,10 +35,10 @@ The full documentation is in README.md, and the design and the decisions behind 
 
 == Installation ==
 
-1. Copy the `enle-daily-cron` folder to `wp-content/plugins/`. Update CRM Agent to 1.10.0 or later.
+1. Copy the `enle-daily-cron` folder to `wp-content/plugins/`. Update agentCRM to 1.10.0 or later.
 2. Activate the plugin on enle.org only. Network activation is refused.
 3. Make sure FluentSMTP can send as contact@enle.org (a Gmail "Send mail as" address on enlelimited@gmail.com).
-4. Go to CRM Agent → Idea follow-ups, tick "Send emails", leave Mode on "Dry run", and save.
+4. Go to agentCRM → Idea follow-ups, tick "Send emails", leave Mode on "Dry run", and save.
 5. After a week of reviewing the previews sent to contact@enle.org, switch Mode to "Live".
 
 == Frequently Asked Questions ==
@@ -53,12 +53,12 @@ Emails are written and checked exactly as in live mode, but they all go to the p
 
 = Where is the Claude API key? =
 
-The plugin reads the key CRM Agent already stores (option `ai_assistant_claude_api_key`). To use a different key, define `ENLE_DC_CLAUDE_API_KEY` in wp-config.php.
+The plugin reads the key agentCRM already stores (option `ai_assistant_claude_api_key`). To use a different key, define `ENLE_DC_CLAUDE_API_KEY` in wp-config.php.
 
 == Changelog ==
 
 = 1.0.4 - 2026-11-15 =
-* The AI Assistant plugin is now called CRM Agent; the admin menu and docs use the new name.
+* The AI Assistant plugin is now called agentCRM; the admin menu and docs use the new name.
 
 = 1.0.3 - 2026-11-11 =
 * Pagination for Leads and Recent activity; loading state on every button.
@@ -67,7 +67,7 @@ The plugin reads the key CRM Agent already stores (option `ai_assistant_claude_a
 * The sign-off follows the From name (or the new Sign-off name setting) instead of always "Monsur".
 
 = 1.0.1 - 2026-11-11 =
-* The admin page is now under CRM Agent → Idea follow-ups.
+* The admin page is now under agentCRM → Idea follow-ups.
 * New "Test the sequence" box: sends Day 3, 7 and 14 to the addresses you enter, straight away.
 
 = 1.0.0 - 2026-11-09 =

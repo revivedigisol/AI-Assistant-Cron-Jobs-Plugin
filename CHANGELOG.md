@@ -2,6 +2,16 @@
 
 All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/). Each release bumps both the `Version:` header and `ENLE_DC_VERSION` in `enle-daily-cron.php`.
 
+## [1.0.5] - 2026-11-16
+
+### Added
+- **Editable email days.** Settings has a new "Email days" row for when emails 1, 2 and 3 go out (default 3, 7, 14). Days must rise with at least 2 days between them and stay within 90, otherwise the defaults are used. Email subjects, prompts and the leads table follow the chosen days; it applies to leads already in the sequence.
+
+- **Timing: send now.** A new Settings → Timing choice. "On schedule" keeps the email days; "Send now" ignores the days and sends every active lead all their remaining emails, one after another, on the next run (use Run now to do it straight away).
+
+### Changed
+- The CRM Agent plugin is now called **agentCRM**: the admin menu (agentCRM → Idea follow-ups), warnings and docs use the new name.
+
 ## [1.0.4] - 2026-11-15
 
 ### Changed

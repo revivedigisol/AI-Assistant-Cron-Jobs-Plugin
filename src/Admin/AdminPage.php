@@ -17,7 +17,7 @@ use Enle\DailyCron\Settings;
 defined('ABSPATH') || exit;
 
 /**
- * CRM Agent → Idea follow-ups (Settings → Idea follow-ups when AI
+ * agentCRM → Idea follow-ups (Settings → Idea follow-ups when AI
  * Assistant's menu is missing). Status, settings, leads and the send log.
  * Every action goes through admin-post.php with a capability check and a
  * nonce; all output is escaped.
@@ -33,12 +33,12 @@ final class AdminPage
     /** Rows per page in Leads. */
     public const LEADS_PER_PAGE = 20;
 
-    /** CRM Agent's top-level menu slug. */
+    /** agentCRM's top-level menu slug. */
     public const PARENT = 'ai-assistant';
 
     public static function register(): void
     {
-        // Priority 20: after CRM Agent has added its top-level menu (priority 10).
+        // Priority 20: after agentCRM has added its top-level menu (priority 10).
         add_action('admin_menu', static function (): void {
             global $admin_page_hooks;
 
@@ -213,6 +213,22 @@ final class AdminPage
 
         echo '<tr><th scope="row">' . esc_html__('Run hour (UTC)', 'enle-daily-cron') . '</th><td><input type="number" min="0" max="23" name="enle_dc[run_hour]" value="' . esc_attr((string) $s['run_hour']) . '" class="small-text"></td></tr>';
 
+        echo '<tr><th scope="row">' . esc_html__('Timing', 'enle-daily-cron') . '</th><td><select name="enle_dc[timing]">'
+            . '<option value="schedule" ' . selected($s['timing'] ?? 'schedule', Settings::TIMING_SCHEDULE, false) . '>' . esc_html__('On schedule (the email days below)', 'enle-daily-cron') . '</option>'
+            . '<option value="now" ' . selected($s['timing'] ?? 'schedule', Settings::TIMING_NOW, false) . '>' . esc_html__('Send now (all remaining emails to every lead, at the next run)', 'enle-daily-cron') . '</option>'
+            . '</select><p class="description">' . esc_html__('"Send now" ignores the days: on the next run (press Run now to do it straight away) every active lead gets all their remaining emails, one after another, written from their own report. Switch back to "On schedule" afterwards, or every daily run will do this for new leads too.', 'enle-daily-cron') . '</p></td></tr>';
+
+        $offsets = Settings::cleanOffsets($s['day_offsets'] ?? null);
+        echo '<tr><th scope="row">' . esc_html__('Email days', 'enle-daily-cron') . '</th><td>';
+        foreach ($offsets as $i => $day) {
+            echo '<label style="margin-right:14px">' . esc_html(sprintf(__('Email %d: day', 'enle-daily-cron'), $i + 1)) . ' <input type="number" min="1" max="' . esc_attr((string) Settings::MAX_OFFSET_DAY) . '" name="enle_dc[day_offsets][' . (int) $i . ']" value="' . esc_attr((string) $day) . '" class="small-text"></label>';
+        }
+        echo '<p class="description">' . esc_html(sprintf(
+            __('Days after the report that each email goes out (default 3, 7, 14). Each must be at least %d days after the one before, and no later than day %d; otherwise the defaults are used. Changes apply to leads already in the sequence.', 'enle-daily-cron'),
+            Settings::MIN_OFFSET_GAP,
+            Settings::MAX_OFFSET_DAY
+        )) . '</p></td></tr>';
+
         $fields = array(
             'preview_email'   => __('Preview inbox (dry run)', 'enle-daily-cron'),
             'alert_email'     => __('Alerts go to', 'enle-daily-cron'),
@@ -249,7 +265,7 @@ final class AdminPage
         echo '<h2>' . esc_html__('Test the sequence', 'enle-daily-cron') . '</h2>';
         echo '<p class="description" style="max-width:900px">' . esc_html(sprintf(
             /* translators: %d: max addresses */
-            __('Sends the Day 3, Day 7 and Day 14 emails to each address now, written by Claude exactly as a lead would get them, with "[Test Day N]" in the subject. Up to %d addresses. They go out in the background over a minute or two; check Recent activity below. Works even when sending is off, and no lead is changed.', 'enle-daily-cron'),
+            __('Sends all three emails (the days set in Settings) to each address now, written by Claude exactly as a lead would get them, with "[Test Day N]" in the subject. Up to %d addresses. They go out in the background over a minute or two; check Recent activity below. Works even when sending is off, and no lead is changed.', 'enle-daily-cron'),
             TestSend::MAX_RECIPIENTS
         )) . '</p>';
 
@@ -258,7 +274,7 @@ final class AdminPage
         echo '<input type="hidden" name="action" value="enle_dc_test_send"><table class="form-table" role="presentation"><tbody>';
 
         echo '<tr><th scope="row"><label for="enle-dc-test-emails">' . esc_html__('Send to', 'enle-daily-cron') . '</label></th><td>'
-            . '<input type="text" class="large-text" id="enle-dc-test-emails" name="test_emails" required placeholder="you@example.com, colleague@example.com">'
+            . '<input type="text" class="regular-text" style="width:25em;max-width:100%" id="enle-dc-test-emails" name="test_emails" required placeholder="you@example.com, colleague@example.com">'
             . '<p class="description">' . esc_html__('Separate addresses with commas.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '<tr><th scope="row"><label for="enle-dc-test-source">' . esc_html__('Report to use', 'enle-daily-cron') . '</label></th><td><select id="enle-dc-test-source" name="test_source">'
@@ -310,7 +326,7 @@ final class AdminPage
             echo '<td>' . esc_html(gmdate('Y-m-d', $lead->enrolled_at)) . '</td>';
             echo '<td>' . esc_html($status) . '</td>';
             echo '<td>' . esc_html($lead->sent === array() ? '—' : implode(', ', array_keys($lead->sent))) . ($lead->skipped !== array() ? '<br><small>' . esc_html(sprintf(__('skipped: %s', 'enle-daily-cron'), implode(', ', $lead->skipped))) . '</small>' : '') . '</td>';
-            echo '<td>' . esc_html($next_at > 0 ? Steps::label(StepPicker::nextStep($lead)) . ', ' . gmdate('Y-m-d', $next_at) : '—') . '</td><td>';
+            echo '<td>' . esc_html($next_at > 0 ? Steps::label(StepPicker::nextStep($lead)) . ', ' . (Settings::sendsNow() ? __('next run', 'enle-daily-cron') : gmdate('Y-m-d', $next_at)) : '—') . '</td><td>';
 
             if ($lead->isActive()) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
@@ -469,11 +485,11 @@ final class AdminPage
         $out = array();
 
         if (ClaudeClient::apiKey() === '') {
-            $out[] = __('No Claude API key found: emails can\'t be written. Set it in CRM Agent settings (or the ENLE_DC_CLAUDE_API_KEY constant).', 'enle-daily-cron');
+            $out[] = __('No Claude API key found: emails can\'t be written. Set it in agentCRM settings (or the ENLE_DC_CLAUDE_API_KEY constant).', 'enle-daily-cron');
         }
 
         if (!defined('AI_ASSISTANT_VERSION') || version_compare((string) AI_ASSISTANT_VERSION, '1.10.0', '<')) {
-            $out[] = __('CRM Agent 1.10.0 or later is needed: earlier versions don\'t tell this plugin when a report is made, so no leads get added.', 'enle-daily-cron');
+            $out[] = __('agentCRM 1.10.0 or later is needed: earlier versions don\'t tell this plugin when a report is made, so no leads get added.', 'enle-daily-cron');
         }
 
         if (!Plugin::signals()->repliedTagExists()) {
@@ -530,7 +546,7 @@ final class AdminPage
 
             $text = $done === 'test_none'
                 ? __('No valid email address was given, so nothing was sent.', 'enle-daily-cron')
-                : sprintf(__('Test run started: Day 3, 7 and 14 are on their way to %d address(es). They arrive over the next minute or two; see Recent activity.', 'enle-daily-cron'), $to);
+                : sprintf(__('Test run started: Day %s are on their way to %d address(es). They arrive over the next minute or two; see Recent activity.', 'enle-daily-cron'), implode(', ', Settings::dayOffsets()), $to);
 
             if ($invalid > 0) {
                 $text .= ' ' . sprintf(__('%d entry(ies) weren\'t valid emails and were skipped.', 'enle-daily-cron'), $invalid);

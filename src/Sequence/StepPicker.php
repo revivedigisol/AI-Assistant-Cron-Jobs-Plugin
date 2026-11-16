@@ -18,6 +18,9 @@ defined('ABSPATH') || exit;
  * - At most one email per run. When two are due at once (missed runs), the
  *   later one is sent and the earlier one skipped.
  * - Never two emails within MIN_GAP_DAYS of each other.
+ * - With $immediate ("send now" timing) the day schedule and the gap rule are
+ *   ignored: the next unsent step is due straight away and nothing is skipped.
+ *   The runner then keeps going until every step has been sent.
  */
 final class StepPicker
 {
@@ -27,8 +30,12 @@ final class StepPicker
     /**
      * @return array{send:?string,skip:array<int,string>,complete:bool,reason:string}
      */
-    public static function decide(Lead $lead, int $now): array
+    public static function decide(Lead $lead, int $now, bool $immediate = false): array
     {
+        if ($immediate) {
+            return self::decideNow($lead, $now);
+        }
+
         $day0    = self::startOfDay($lead->enrolled_at);
         $send    = null;
         $skip    = array();
@@ -69,6 +76,18 @@ final class StepPicker
             'complete' => $send === null && !$pending,
             'reason'   => $send !== null ? 'due' : ($pending ? 'not_due_yet' : 'sequence_finished'),
         );
+    }
+
+    /** @return array{send:?string,skip:array<int,string>,complete:bool,reason:string} */
+    private static function decideNow(Lead $lead, int $now): array
+    {
+        $next = self::nextStep($lead);
+
+        if ($next === '') {
+            return array('send' => null, 'skip' => array(), 'complete' => true, 'reason' => 'sequence_finished');
+        }
+
+        return array('send' => $next, 'skip' => array(), 'complete' => false, 'reason' => 'due');
     }
 
     /** When the next step falls due, for the admin page. 0 when nothing is left. */

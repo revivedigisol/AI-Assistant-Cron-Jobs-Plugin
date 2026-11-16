@@ -14,17 +14,17 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
 ## Requirements
 
 - WordPress 6.5+, PHP 8.1+. No Composer packages at runtime; deploy by copying the folder.
-- **CRM Agent 1.10.0+** on the same site. It fires `enle_idea_validation_report_ready`, which adds the lead.
-- The Claude API key saved in CRM Agent settings (option `ai_assistant_claude_api_key`), or the constant `ENLE_DC_CLAUDE_API_KEY` in `wp-config.php`.
+- **agentCRM 1.10.0+** on the same site. It fires `enle_idea_validation_report_ready`, which adds the lead.
+- The Claude API key saved in agentCRM settings (option `ai_assistant_claude_api_key`), or the constant `ENLE_DC_CLAUDE_API_KEY` in `wp-config.php`.
 - FluentSMTP (or any working `wp_mail()`). FluentCRM, FluentCart and FluentBooking are read for the stop rules; if one is missing, its rule simply never fires.
 
 ## Setup on enle.org
 
-1. Copy the folder to `wp-content/plugins/enle-daily-cron/`. Update CRM Agent to 1.10.0.
+1. Copy the folder to `wp-content/plugins/enle-daily-cron/`. Update agentCRM to 1.10.0.
 2. **Activate on enle.org only** (Sites → enle.org → Plugins). Network activation is refused.
 3. FluentCRM tag **"Replied"** (already created on enle.org, ID 37). When a lead replies, the team adds it to their contact, and their emails stop.
 4. **Sender:** FluentSMTP's connection is the Gmail account `enlelimited@gmail.com`. Add `contact@enle.org` as a verified "Send mail as" address on that Gmail account (or add a FluentSMTP connection for it). Otherwise Gmail rewrites the From address to enlelimited@gmail.com.
-5. CRM Agent → **Idea follow-ups**: tick **Send emails**, leave **Mode = Dry run**, save.
+5. agentCRM → **Idea follow-ups**: tick **Send emails**, leave **Mode = Dry run**, save.
 6. No server cron is needed. The plugin runs on WordPress's own WP-Cron, which fires on site visits. Checked on enle.org (2026-11-09): WP-Cron is on (`DISABLE_WP_CRON` not set), the site can reach its own `wp-cron.php`, and no events were overdue. A late run costs nothing: each step can still go out for 7 days after it falls due. If runs ever stop (for example `DISABLE_WP_CRON` gets set), the admin page shows a warning and the team gets a "missed run" alert.
 7. After a week of reviewing the previews in the preview inbox, switch **Mode = Live**.
 
@@ -44,7 +44,7 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
   4. **Send.** `wp_mail()` with From `Monsur at Enle <contact@enle.org>` (the From name and the sign-off name are settings; by default the email is signed with the From name before " at "), Reply-To `contact@enle.org`, `List-Unsubscribe` + one-click, and an unsubscribe link in the footer.
 - **Dry run:** emails are written and checked as in live mode but go to the preview inbox with a `[Preview: … to Name <email>]` subject. Each lead's schedule still moves on.
 - **Alerts** (to `contact@enle.org` by default): a summary email when a run had failures or the previous run was more than 36 hours earlier, and an "Action needed" email for each purchase or booking.
-- **Admin page** (CRM Agent → Idea follow-ups): status, warnings, settings, leads (with a Stop button), and recent activity, including the full text of every email sent.
+- **Admin page** (agentCRM → Idea follow-ups): status, warnings, settings, leads (with a Stop button), and recent activity, including the full text of every email sent.
 - **Test the sequence** (same page): comma-separated emails get Day 3, 7 and 14 straight away, from the sample report or a real lead's report. Nothing about any lead changes.
 
 ## WP-CLI
