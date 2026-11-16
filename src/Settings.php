@@ -12,11 +12,10 @@ final class Settings
 {
     public const OPTION = 'enle_dc_settings';
 
-    public const MODE_DRY_RUN = 'dry_run';
-    public const MODE_LIVE    = 'live';
-
-    public const TIMING_SCHEDULE = 'schedule';
-    public const TIMING_NOW      = 'now';
+    /** Emails go to the leads on the email days (default 3, 7, 14). */
+    public const MODE_LIVE = 'live';
+    /** Emails go to the leads at the next run: every remaining email, in order, whatever day it is. */
+    public const MODE_NOW = 'now';
 
     /** @return array<string,mixed> */
     public static function defaults(): array
@@ -24,10 +23,9 @@ final class Settings
         return array(
             // Off until an admin switches it on; then dry-run first.
             'enabled'          => false,
-            'mode'             => self::MODE_DRY_RUN,
+            'mode'             => self::MODE_LIVE,
             'run_hour'         => 9,
             'alert_email'      => 'contact@enle.org',
-            'preview_email'    => 'contact@enle.org',
             'from_email'       => 'contact@enle.org',
             'from_name'        => 'Monsur at Enle',
             // Empty: the From name up to " at " ("Monsur at Enle" signs as "Monsur").
@@ -43,8 +41,6 @@ final class Settings
             'retention_days'   => 180,
             // Days after the report that email 1, 2 and 3 go out.
             'day_offsets'      => array(3, 7, 14),
-            // 'schedule': each email on its day. 'now': the next email goes out on the next run, whatever day it is.
-            'timing'           => self::TIMING_SCHEDULE,
         );
     }
 
@@ -129,10 +125,16 @@ final class Settings
         $out = array();
 
         $out['enabled']  = isset($input['enabled']) ? (bool) $input['enabled'] : $d['enabled'];
-        $out['mode']     = isset($input['mode']) && $input['mode'] === self::MODE_LIVE ? self::MODE_LIVE : self::MODE_DRY_RUN;
+
+        // Dry run no longer exists. A site saved in it must not start emailing real leads by itself, so it comes back switched off.
+        if (isset($input['mode']) && $input['mode'] === 'dry_run') {
+            $out['enabled'] = false;
+        }
+
+        $out['mode']     = isset($input['mode']) && $input['mode'] === self::MODE_NOW ? self::MODE_NOW : self::MODE_LIVE;
         $out['run_hour'] = isset($input['run_hour']) ? max(0, min(23, (int) $input['run_hour'])) : $d['run_hour'];
 
-        foreach (array('alert_email', 'preview_email', 'from_email', 'reply_to') as $key) {
+        foreach (array('alert_email', 'from_email', 'reply_to') as $key) {
             $email     = isset($input[$key]) ? sanitize_email((string) $input[$key]) : '';
             $out[$key] = is_email($email) ? $email : $d[$key];
         }
@@ -170,8 +172,6 @@ final class Settings
 
         $out['retention_days'] = isset($input['retention_days']) ? max(30, min(730, (int) $input['retention_days'])) : $d['retention_days'];
 
-        $out['timing'] = isset($input['timing']) && $input['timing'] === self::TIMING_NOW ? self::TIMING_NOW : self::TIMING_SCHEDULE;
-
         $out['day_offsets'] = self::cleanOffsets($input['day_offsets'] ?? null);
 
         return $out;
@@ -188,12 +188,7 @@ final class Settings
 
     public static function sendsNow(): bool
     {
-        return self::get('timing') === self::TIMING_NOW;
-    }
-
-    public static function isLive(): bool
-    {
-        return self::get('mode') === self::MODE_LIVE;
+        return self::get('mode') === self::MODE_NOW;
     }
 
     /**

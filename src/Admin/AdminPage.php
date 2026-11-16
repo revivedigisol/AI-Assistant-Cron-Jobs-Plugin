@@ -163,9 +163,9 @@ final class AdminPage
         // Status.
         echo '<h2>' . esc_html__('Status', 'enle-daily-cron') . '</h2><table class="widefat striped" style="max-width:900px"><tbody>';
         self::row(__('Sending', 'enle-daily-cron'), $s['enabled'] ? __('On', 'enle-daily-cron') : __('Off', 'enle-daily-cron'));
-        self::row(__('Mode', 'enle-daily-cron'), $s['mode'] === Settings::MODE_LIVE
-            ? __('Live: emails go to the leads', 'enle-daily-cron')
-            : sprintf(__('Dry run: every email goes to %s instead of the lead', 'enle-daily-cron'), $s['preview_email']));
+        self::row(__('Mode', 'enle-daily-cron'), $s['mode'] === Settings::MODE_NOW
+            ? __('Send now: every lead gets all their remaining emails at the next run', 'enle-daily-cron')
+            : __('Live: emails go to the leads on the email days', 'enle-daily-cron'));
         self::row(__('Next daily run', 'enle-daily-cron'), $next ? gmdate('Y-m-d H:i', (int) $next) . ' UTC' : __('Not scheduled', 'enle-daily-cron'));
         self::row(__('Last run', 'enle-daily-cron'), self::lastRunText(is_array($last) ? $last : array()));
         self::row(__('Claude API key', 'enle-daily-cron'), ClaudeClient::apiKey() !== '' ? __('Found', 'enle-daily-cron') : __('Missing', 'enle-daily-cron'));
@@ -176,7 +176,7 @@ final class AdminPage
         wp_nonce_field('enle_dc_run');
         echo '<input type="hidden" name="action" value="enle_dc_run">';
         submit_button(
-            $s['mode'] === Settings::MODE_LIVE ? __('Run now (sends to leads)', 'enle-daily-cron') : __('Run now (dry run)', 'enle-daily-cron'),
+            __('Run now (sends to leads)', 'enle-daily-cron'),
             'secondary',
             'submit',
             false,
@@ -207,16 +207,11 @@ final class AdminPage
             . esc_html__('Run the sequence every day', 'enle-daily-cron') . '</label></td></tr>';
 
         echo '<tr><th scope="row">' . esc_html__('Mode', 'enle-daily-cron') . '</th><td><select name="enle_dc[mode]">'
-            . '<option value="dry_run" ' . selected($s['mode'], Settings::MODE_DRY_RUN, false) . '>' . esc_html__('Dry run (send to the preview inbox)', 'enle-daily-cron') . '</option>'
-            . '<option value="live" ' . selected($s['mode'], Settings::MODE_LIVE, false) . '>' . esc_html__('Live (send to the leads)', 'enle-daily-cron') . '</option>'
-            . '</select></td></tr>';
+            . '<option value="live" ' . selected($s['mode'], Settings::MODE_LIVE, false) . '>' . esc_html__('Live (sends to the leads on the email days)', 'enle-daily-cron') . '</option>'
+            . '<option value="now" ' . selected($s['mode'], Settings::MODE_NOW, false) . '>' . esc_html__('Send now (sends to the leads right away)', 'enle-daily-cron') . '</option>'
+            . '</select><p class="description">' . esc_html__('"Send now" ignores the days: at the next run (press Run now to do it straight away) every active lead gets all their remaining emails, one after another, written from their own report. Switch back to "Live" afterwards, or every daily run will do this for new leads too.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '<tr><th scope="row">' . esc_html__('Run hour (UTC)', 'enle-daily-cron') . '</th><td><input type="number" min="0" max="23" name="enle_dc[run_hour]" value="' . esc_attr((string) $s['run_hour']) . '" class="small-text"></td></tr>';
-
-        echo '<tr><th scope="row">' . esc_html__('Timing', 'enle-daily-cron') . '</th><td><select name="enle_dc[timing]">'
-            . '<option value="schedule" ' . selected($s['timing'] ?? 'schedule', Settings::TIMING_SCHEDULE, false) . '>' . esc_html__('On schedule (the email days below)', 'enle-daily-cron') . '</option>'
-            . '<option value="now" ' . selected($s['timing'] ?? 'schedule', Settings::TIMING_NOW, false) . '>' . esc_html__('Send now (all remaining emails to every lead, at the next run)', 'enle-daily-cron') . '</option>'
-            . '</select><p class="description">' . esc_html__('"Send now" ignores the days: on the next run (press Run now to do it straight away) every active lead gets all their remaining emails, one after another, written from their own report. Switch back to "On schedule" afterwards, or every daily run will do this for new leads too.', 'enle-daily-cron') . '</p></td></tr>';
 
         $offsets = Settings::cleanOffsets($s['day_offsets'] ?? null);
         echo '<tr><th scope="row">' . esc_html__('Email days', 'enle-daily-cron') . '</th><td>';
@@ -230,7 +225,6 @@ final class AdminPage
         )) . '</p></td></tr>';
 
         $fields = array(
-            'preview_email'   => __('Preview inbox (dry run)', 'enle-daily-cron'),
             'alert_email'     => __('Alerts go to', 'enle-daily-cron'),
             'from_name'       => __('From name', 'enle-daily-cron'),
             'signoff_name'    => __('Sign-off name (empty: From name before " at ")', 'enle-daily-cron'),

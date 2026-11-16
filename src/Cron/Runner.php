@@ -69,7 +69,7 @@ final class Runner
         $previous = get_option(self::LAST_RUN_OPTION, array());
         $summary  = array(
             'status'                   => 'ok',
-            'mode'                     => Settings::isLive() ? Settings::MODE_LIVE : Settings::MODE_DRY_RUN,
+            'mode'                     => Settings::sendsNow() ? Settings::MODE_NOW : Settings::MODE_LIVE,
             'started_at'               => $now,
             'hours_since_previous_run' => is_array($previous) && !empty($previous['started_at']) ? round(($now - (int) $previous['started_at']) / HOUR_IN_SECONDS, 1) : 0,
             'sent'                     => array(),
@@ -205,20 +205,14 @@ final class Runner
             return;
         }
 
-        $live            = Settings::isLive();
         $unsubscribe_url = Unsubscribe::url($lead);
         $html            = Renderer::html($draft['body'], $unsubscribe_url);
-        $to              = $live ? $lead->email : (string) Settings::get('preview_email');
-        $subject         = $live
-            ? $draft['subject']
-            : sprintf('[Preview: %s to %s <%s>] %s', Steps::label($step), $lead->name !== '' ? $lead->name : 'lead', $lead->email, $draft['subject']);
+        $to              = $lead->email;
+        $subject         = $draft['subject'];
 
-        $headers = self::senderHeaders();
-
-        if ($live) {
-            $headers[] = 'List-Unsubscribe: <' . esc_url_raw($unsubscribe_url) . '>';
-            $headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
-        }
+        $headers   = self::senderHeaders();
+        $headers[] = 'List-Unsubscribe: <' . esc_url_raw($unsubscribe_url) . '>';
+        $headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 
         $result = $this->mailer->send($to, $subject, $html, $headers);
 
@@ -229,7 +223,7 @@ final class Runner
         }
 
         $lead->sent[$step] = $now;
-        $this->store->log($lead->id, $step, $live ? 'sent' : 'previewed', 'To ' . $to, $draft['subject'], $draft['body']);
+        $this->store->log($lead->id, $step, 'sent', 'To ' . $to, $draft['subject'], $draft['body']);
         $summary['sent'][] = array('email' => $lead->email, 'step' => $step);
     }
 

@@ -26,7 +26,7 @@ interface LeadStore
     public function countLeads(): int;
 
     /**
-     * @param string $action sent|previewed|skipped|failed|stopped|enrolled|updated|completed
+     * @param string $action sent|skipped|failed|stopped|enrolled|updated|completed
      */
     public function log(int $lead_id, string $step, string $action, string $detail = '', string $subject = '', string $body = ''): void;
 

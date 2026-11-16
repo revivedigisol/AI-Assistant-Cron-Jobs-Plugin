@@ -92,7 +92,7 @@ final class EmailPartsTest extends TestCase
         ));
 
         $this->assertTrue($s['enabled']);
-        $this->assertSame(Settings::MODE_DRY_RUN, $s['mode']);
+        $this->assertSame(Settings::MODE_LIVE, $s['mode']);
         $this->assertSame(23, $s['run_hour']);
         $this->assertSame('contact@enle.org', $s['alert_email']);
         $this->assertSame('https://enle.org/market-validation/', $s['programme_url']);
@@ -103,10 +103,19 @@ final class EmailPartsTest extends TestCase
         $this->assertArrayNotHasKey('unknown', $s);
     }
 
-    public function testDefaultsAreOffAndDryRun(): void
+    public function testDefaultsAreOffAndOnSchedule(): void
     {
         $this->assertFalse(Settings::get('enabled'));
-        $this->assertFalse(Settings::isLive());
+        $this->assertSame(Settings::MODE_LIVE, Settings::get('mode'));
+        $this->assertFalse(Settings::sendsNow());
+    }
+
+    public function testASiteSavedInTheRetiredDryRunModeComesBackSwitchedOff(): void
+    {
+        $s = Settings::sanitize(array('enabled' => true, 'mode' => 'dry_run'));
+
+        $this->assertFalse($s['enabled']);
+        $this->assertSame(Settings::MODE_LIVE, $s['mode']);
     }
 
     public function testNextRunIsTheNextOccurrenceOfTheHour(): void

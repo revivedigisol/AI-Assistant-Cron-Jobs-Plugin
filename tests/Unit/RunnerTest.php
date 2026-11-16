@@ -103,25 +103,9 @@ final class RunnerTest extends TestCase
         $this->assertSame(array(), $this->alerts->sent, 'No alert when all went well.');
     }
 
-    public function testDryRunSendsToThePreviewInboxAndStillMovesTheScheduleOn(): void
-    {
-        WpStub::$options[Settings::OPTION] = array('enabled' => true, 'mode' => Settings::MODE_DRY_RUN, 'preview_email' => 'preview@enle.org');
-        $id                = $this->add(self::lead(3));
-        $this->ai->replies = array(self::validDraft(Steps::DAY3));
-
-        $this->runner()->run(false, self::NOW);
-
-        $mail = $this->mailer->sent[0];
-        $this->assertSame('preview@enle.org', $mail['to']);
-        $this->assertStringStartsWith('[Preview: Day 3: Here\'s what matters most to Mariam Bello <mariam@example.com>]', $mail['subject']);
-        $this->assertNotContains('List-Unsubscribe-Post: List-Unsubscribe=One-Click', $mail['headers']);
-        $this->assertArrayHasKey(Steps::DAY3, $this->store->find($id)->sent);
-        $this->assertSame(array('previewed:day3'), $this->store->actions($id));
-    }
-
     public function testSendNowSendsOnlyTheRemainingEmailsInOrder(): void
     {
-        WpStub::$options[Settings::OPTION] = array('enabled' => true, 'mode' => Settings::MODE_LIVE, 'timing' => Settings::TIMING_NOW);
+        WpStub::$options[Settings::OPTION] = array('enabled' => true, 'mode' => Settings::MODE_NOW);
         $fresh             = $this->add(self::lead(0));
         $partway           = $this->add(self::lead(1, array('email' => 'b@example.com', 'sent' => array(Steps::DAY3 => self::NOW - 5 * DAY_IN_SECONDS))));
         $this->ai->replies = array(

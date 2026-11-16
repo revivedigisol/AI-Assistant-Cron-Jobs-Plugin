@@ -24,9 +24,9 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
 2. **Activate on enle.org only** (Sites → enle.org → Plugins). Network activation is refused.
 3. FluentCRM tag **"Replied"** (already created on enle.org, ID 37). When a lead replies, the team adds it to their contact, and their emails stop.
 4. **Sender:** FluentSMTP's connection is the Gmail account `enlelimited@gmail.com`. Add `contact@enle.org` as a verified "Send mail as" address on that Gmail account (or add a FluentSMTP connection for it). Otherwise Gmail rewrites the From address to enlelimited@gmail.com.
-5. agentCRM → **Idea follow-ups**: tick **Send emails**, leave **Mode = Dry run**, save.
+5. agentCRM → **Idea follow-ups**: tick **Send emails**, leave **Mode = Live** (emails go to the leads on the email days), save.
 6. No server cron is needed. The plugin runs on WordPress's own WP-Cron, which fires on site visits. Checked on enle.org (2026-11-09): WP-Cron is on (`DISABLE_WP_CRON` not set), the site can reach its own `wp-cron.php`, and no events were overdue. A late run costs nothing: each step can still go out for 7 days after it falls due. If runs ever stop (for example `DISABLE_WP_CRON` gets set), the admin page shows a warning and the team gets a "missed run" alert.
-7. After a week of reviewing the previews in the preview inbox, switch **Mode = Live**.
+7. To send to the leads straight away instead, set **Mode = Send now** and press **Run now**, then switch back to Live.
 
 ## How it works
 
@@ -42,7 +42,7 @@ Specs: `Enle_Idea_to_Market_Email_Sequence.docx` and `Sequence Emails.docx`. Des
   2. **Pick the step.** A step falls due on its calendar day (UTC) and can go out for 7 days after that. If it's later than that, it's skipped. At most one email per lead per run, and never two within 2 days.
   3. **Write.** Claude writes the email (structured JSON output, model `claude-opus-5-5`, refusal fallback on). The plugin then checks it: greeting, sign-off, length, no Markdown/HTML/placeholders, and the step rules (Day 3: no price and no links; Day 7: the price and programme link; Day 14: the three numbered options). Only the configured enle.org links are allowed. If a draft fails, Claude gets one retry with the reasons. If that fails too, nothing is sent and the team is alerted; the next run tries again.
   4. **Send.** `wp_mail()` with From `Monsur at Enle <contact@enle.org>` (the From name and the sign-off name are settings; by default the email is signed with the From name before " at "), Reply-To `contact@enle.org`, `List-Unsubscribe` + one-click, and an unsubscribe link in the footer.
-- **Dry run:** emails are written and checked as in live mode but go to the preview inbox with a `[Preview: … to Name <email>]` subject. Each lead's schedule still moves on.
+- **Send now:** ignores the email days. At the next run (or when you press Run now) every active lead gets all their remaining emails, in order, and leads who already had some only get the rest.
 - **Alerts** (to `contact@enle.org` by default): a summary email when a run had failures or the previous run was more than 36 hours earlier, and an "Action needed" email for each purchase or booking.
 - **Admin page** (agentCRM → Idea follow-ups): status, warnings, settings, leads (with a Stop button), and recent activity, including the full text of every email sent.
 - **Test the sequence** (same page): comma-separated emails get Day 3, 7 and 14 straight away, from the sample report or a real lead's report. Nothing about any lead changes.

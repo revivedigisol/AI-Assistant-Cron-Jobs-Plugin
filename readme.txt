@@ -38,8 +38,8 @@ The full documentation is in README.md, and the design and the decisions behind 
 1. Copy the `enle-daily-cron` folder to `wp-content/plugins/`. Update agentCRM to 1.10.0 or later.
 2. Activate the plugin on enle.org only. Network activation is refused.
 3. Make sure FluentSMTP can send as contact@enle.org (a Gmail "Send mail as" address on enlelimited@gmail.com).
-4. Go to agentCRM → Idea follow-ups, tick "Send emails", leave Mode on "Dry run", and save.
-5. After a week of reviewing the previews sent to contact@enle.org, switch Mode to "Live".
+4. Go to agentCRM → Idea follow-ups, tick "Send emails", leave Mode on "Live", and save.
+5. To send to the leads straight away instead, set Mode to "Send now" and press Run now, then switch back to "Live".
 
 == Frequently Asked Questions ==
 
@@ -47,9 +47,9 @@ The full documentation is in README.md, and the design and the decisions behind 
 
 No. When a lead replies, the team adds the FluentCRM tag "Replied" (tag ID 37 on enle.org) to their contact, and the lead's emails stop.
 
-= What happens in dry run? =
+= What does Send now do? =
 
-Emails are written and checked exactly as in live mode, but they all go to the preview inbox instead of the lead. Each lead's schedule still moves forward.
+It ignores the email days. At the next run (or when you press Run now) every active lead gets all their remaining emails, in order. A lead who already had Day 3 only gets the rest.
 
 = Where is the Claude API key? =
 
