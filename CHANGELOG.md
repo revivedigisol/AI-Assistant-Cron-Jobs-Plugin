@@ -7,7 +7,7 @@ All notable changes to Enle Daily Cron. The format follows [Keep a Changelog](ht
 ### Added
 - **Editable email days.** Settings has a new "Email days" row for when emails 1, 2 and 3 go out (default 3, 7, 14). Days must rise with at least 2 days between them and stay within 90, otherwise the defaults are used. Email subjects, prompts and the leads table follow the chosen days; it applies to leads already in the sequence.
 
-- **Send now.** Mode now has two choices, both sending to the leads: **Live** (the email days) and **Send now**, which ignores the days and sends every active lead all their remaining emails, one after another, on the next run (use Run now to do it straight away). A lead who already had Day 3 only gets the rest.
+- **Send now.** Mode now has two choices, both sending to the leads: **Live** (the email days) and **Send now**, which ignores the days and sends every active lead all their remaining emails, one after another, on the next run (use Run now to do it straight away). A lead who already had Day 3 only gets the rest. The mode stays as saved: every cron run follows it.
 
 ### Changed
 - **Dry run removed.** There is no preview inbox any more; the "Preview inbox" setting is gone. A site that was saved in Dry run comes back with sending switched **off**, so it can't start emailing real leads by itself.

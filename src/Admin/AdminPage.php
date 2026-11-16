@@ -209,7 +209,7 @@ final class AdminPage
         echo '<tr><th scope="row">' . esc_html__('Mode', 'enle-daily-cron') . '</th><td><select name="enle_dc[mode]">'
             . '<option value="live" ' . selected($s['mode'], Settings::MODE_LIVE, false) . '>' . esc_html__('Live (sends to the leads on the email days)', 'enle-daily-cron') . '</option>'
             . '<option value="now" ' . selected($s['mode'], Settings::MODE_NOW, false) . '>' . esc_html__('Send now (sends to the leads right away)', 'enle-daily-cron') . '</option>'
-            . '</select><p class="description">' . esc_html__('"Send now" ignores the days: at the next run (press Run now to do it straight away) every active lead gets all their remaining emails, one after another, written from their own report. Switch back to "Live" afterwards, or every daily run will do this for new leads too.', 'enle-daily-cron') . '</p></td></tr>';
+            . '</select><p class="description">' . esc_html__('"Send now" ignores the days: at the next run (press Run now to do it straight away) every active lead gets all their remaining emails, one after another, written from their own report. The mode stays as saved: with "Send now" every run sends the remaining emails; with "Live" each run sends only the one that is due that day.', 'enle-daily-cron') . '</p></td></tr>';
 
         echo '<tr><th scope="row">' . esc_html__('Run hour (UTC)', 'enle-daily-cron') . '</th><td><input type="number" min="0" max="23" name="enle_dc[run_hour]" value="' . esc_attr((string) $s['run_hour']) . '" class="small-text"></td></tr>';
 

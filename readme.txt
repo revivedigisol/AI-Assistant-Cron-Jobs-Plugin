@@ -49,7 +49,7 @@ No. When a lead replies, the team adds the FluentCRM tag "Replied" (tag ID 37 on
 
 = What does Send now do? =
 
-It ignores the email days. At the next run (or when you press Run now) every active lead gets all their remaining emails, in order. A lead who already had Day 3 only gets the rest.
+It ignores the email days. At the next run (or when you press Run now) every active lead gets all their remaining emails, in order. A lead who already had Day 3 only gets the rest. The mode stays as saved; every cron run follows it. With Live, each run sends only the one email that is due on its day.
 
 = Where is the Claude API key? =
 

@@ -118,6 +118,7 @@ final class RunnerTest extends TestCase
         $this->assertSame(array('sent:day3', 'sent:day7', 'sent:day14', 'completed'), $this->store->actions($fresh));
         $this->assertSame(array('sent:day7', 'sent:day14', 'completed'), $this->store->actions($partway));
         $this->assertCount(5, $this->mailer->sent);
+        $this->assertSame(Settings::MODE_NOW, Settings::get('mode'), 'The saved mode is never changed by a run.');
     }
 
     public function testNothingIsSentBeforeTheStepIsDue(): void
